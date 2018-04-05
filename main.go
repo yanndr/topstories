@@ -9,9 +9,9 @@ import (
 
 func main() {
 	fmt.Println("topstories dispays the top stories of a news aggregator api. (hakernews)")
-	c := hackernews.New()
+	c := hackernews.New(20)
 
-	resp, err := c.Get(20)
+	resp, err := c.Get(100)
 
 	if err != nil {
 		log.Panic(err)

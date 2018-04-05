@@ -17,11 +17,14 @@ const (
 )
 
 type hackernews struct {
+	sem chan int
 }
 
 // New return a new HackerNews client.
-func New() client.Client {
-	return &hackernews{}
+func New(maxGoRoutine int) client.Client {
+	return &hackernews{
+		sem: make(chan int, maxGoRoutine),
+	}
 }
 
 type item struct {
@@ -29,7 +32,7 @@ type item struct {
 	URL   string `json:"url"`
 }
 
-func (hackernews) Get(limit int) (<-chan string, error) {
+func (h hackernews) Get(limit int) (<-chan string, error) {
 	b, err := client.Get(topStoriesURL)
 	if err != nil {
 		return nil, fmt.Errorf("error on get news ids request: %s", err)
@@ -47,6 +50,7 @@ func (hackernews) Get(limit int) (<-chan string, error) {
 	for _, id := range ids {
 		wg.Add(1)
 		go func(id int) {
+			h.sem <- 1
 			defer wg.Done()
 			b, err := client.Get(fmt.Sprintf(itemURL, id))
 			if err != nil {
@@ -59,6 +63,7 @@ func (hackernews) Get(limit int) (<-chan string, error) {
 				return
 			}
 			resp <- item.Title
+			<-h.sem
 		}(id)
 	}
 
