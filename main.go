@@ -17,7 +17,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	for r := range <-resp {
-		fmt.Println(r)
+	for r := range resp {
+		fmt.Println("resp: ", r)
 	}
 }

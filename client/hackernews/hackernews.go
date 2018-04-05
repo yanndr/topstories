@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
+	"sync"
 
 	"github.com/yanndr/topstories/client"
 )
@@ -24,42 +24,50 @@ func New() client.Client {
 	return &hackernews{}
 }
 
+type item struct {
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
 func (hackernews) Get(limit int) (<-chan string, error) {
-	b, err := getNews(topStoriesURL)
+	b, err := client.Get(topStoriesURL)
 	if err != nil {
 		return nil, fmt.Errorf("error on get news ids request: %s", err)
 	}
 	defer b.Close()
 	ids, err := parseIDs(b)
 	if err != nil {
-		return nil, fmt.Errorf("error parsinf ids response: %s", err)
+		return nil, fmt.Errorf("error parsing ids response: %s", err)
 	}
 
 	resp := make(chan string)
 
 	ids = ids[:limit]
-
-	for k, id := range ids {
+	wg := sync.WaitGroup{}
+	for _, id := range ids {
+		wg.Add(1)
 		go func(id int) {
-			resp <- fmt.Sprint(k)
+			defer wg.Done()
+			b, err := client.Get(fmt.Sprintf(itemURL, id))
+			if err != nil {
+				log.Printf("need to handle this error: %s", err)
+				return
+			}
+			item, err := parseItem(b)
+			if err != nil {
+				log.Printf("need to handle this error: %s", err)
+				return
+			}
+			resp <- item.Title
 		}(id)
-		log.Println(k)
 	}
+
+	go func() {
+		wg.Wait()
+		close(resp)
+	}()
+
 	return resp, nil
-
-}
-
-func getNews(url string) (io.ReadCloser, error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("error on topstories request: %s", err)
-	}
-
-	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("err topstories request: %s", res.Status)
-	}
-
-	return res.Body, nil
 
 }
 
@@ -79,4 +87,19 @@ func parseIDs(r io.Reader) ([]int, error) {
 	}
 
 	return keys, nil
+}
+
+func parseItem(r io.Reader) (*item, error) {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	i := &item{}
+	err = json.Unmarshal(b, i)
+	if err != nil {
+		return nil, err
+	}
+
+	return i, nil
 }
