@@ -17,13 +17,16 @@ const (
 )
 
 type hackernews struct {
-	sem chan int
+	sem                    chan int
+	topStoriesURL, itemURL string
 }
 
 // New return a new HackerNews client.
 func New(maxGoRoutine int) client.Client {
 	return &hackernews{
-		sem: make(chan int, maxGoRoutine),
+		sem:           make(chan int, maxGoRoutine),
+		topStoriesURL: topStoriesURL,
+		itemURL:       itemURL,
 	}
 }
 
@@ -33,7 +36,7 @@ type item struct {
 }
 
 func (h hackernews) Get(limit int) (<-chan string, error) {
-	b, err := client.Get(topStoriesURL)
+	b, err := client.Get(h.topStoriesURL)
 	if err != nil {
 		return nil, fmt.Errorf("error on get news ids request: %s", err)
 	}
@@ -52,7 +55,7 @@ func (h hackernews) Get(limit int) (<-chan string, error) {
 		go func(id int) {
 			h.sem <- 1
 			defer wg.Done()
-			b, err := client.Get(fmt.Sprintf(itemURL, id))
+			b, err := client.Get(fmt.Sprintf(h.itemURL, id))
 			if err != nil {
 				log.Printf("need to handle this error: %s", err)
 				return
@@ -77,18 +80,19 @@ func (h hackernews) Get(limit int) (<-chan string, error) {
 }
 
 func parseIDs(r io.Reader) ([]int, error) {
-
-	body, err := ioutil.ReadAll(r)
-
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing ids failed readall error: %v", err)
 	}
 
 	var keys []int
-	err = json.Unmarshal(body, &keys)
+	if len(b) == 0 {
+		return keys, nil
+	}
 
+	err = json.Unmarshal(b, &keys)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing ids failed Unmasrshal error: %v", err)
 	}
 
 	return keys, nil
@@ -97,13 +101,17 @@ func parseIDs(r io.Reader) ([]int, error) {
 func parseItem(r io.Reader) (*item, error) {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing item failed readall error: %v", err)
 	}
 
 	i := &item{}
+	if len(b) == 0 {
+		return i, nil
+	}
+
 	err = json.Unmarshal(b, i)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing item failed Unmasrshal error: %v", err)
 	}
 
 	return i, nil
