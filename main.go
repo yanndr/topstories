@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	fmt.Println("topstories dispays the top stories of a news aggregator api. (hakernews)")
 	c := hackernews.New(20)
 
 	resp, err := c.Get(20)
@@ -26,5 +25,4 @@ func main() {
 			log.Panic(err)
 		}
 	}
-
 }

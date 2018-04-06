@@ -98,7 +98,7 @@ func TestParseItem(t *testing.T) {
 		result *item
 		err    bool
 	}{
-		{name: "basic", input: response, result: &item{Title: "Google Workers Urge C.E.O. To Pull Out of Pentagon A.I. Project", URL: "https://www.nytimes.com/2018/04/04/technology/google-letter-ceo-pentagon-project.html"}, err: false},
+		{name: "basic", input: response, result: &item{T: "Google Workers Urge C.E.O. To Pull Out of Pentagon A.I. Project", U: "https://www.nytimes.com/2018/04/04/technology/google-letter-ceo-pentagon-project.html"}, err: false},
 		{name: "empty", input: "", result: &item{}, err: false},
 		{name: "wrong format", input: "tst", result: nil, err: true},
 	}
@@ -117,8 +117,8 @@ func TestParseItem(t *testing.T) {
 				return
 			}
 
-			if r.Title != tc.result.Title {
-				t.Fatalf("expected %v, got %v", tc.result.Title, r.Title)
+			if r.Title() != tc.result.T {
+				t.Fatalf("expected %v, got %v", tc.result.T, r.Title())
 			}
 
 		})
