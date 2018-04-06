@@ -1,6 +1,7 @@
 # topstories
 [![Build Status](https://travis-ci.org/yanndr/topstories.svg?branch=master)](https://travis-ci.org/yanndr/topstories) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/yanndr/topstories)](https://goreportcard.com/report/github.com/yanndr/topstories)
+[![GoDoc](https://godoc.org/github.com/yanndr/topstories?status.svg)](https://godoc.org/github.com/yanndr/topstories)
 
 ## About
 topstories dispays a given number of top stories from a news aggregator. The current verion implements only Hakernews.
