@@ -60,6 +60,7 @@ func (p *reddit) GetStories(limit int) (<-chan provider.Response, error) {
 			resp.Story = v.Data
 			ch <- resp
 		}
+		close(ch)
 	}()
 
 	return ch, nil
