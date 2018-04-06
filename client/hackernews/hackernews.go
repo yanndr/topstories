@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"sync"
 
 	"github.com/yanndr/topstories/client"
@@ -58,10 +59,10 @@ func (h hackernews) Get(limit int) (<-chan client.Response, error) {
 		go func(id int) {
 			h.sem <- 1
 			defer func() {
+				log.Println("done")
 				wg.Done()
 				<-h.sem
 			}()
-
 			r := client.Response{}
 			item, err := getItem(fmt.Sprintf(h.itemURL, id))
 			if err != nil {
