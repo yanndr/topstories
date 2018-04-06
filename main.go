@@ -9,17 +9,17 @@ import (
 	"os"
 
 	"github.com/yanndr/topstories/provider"
-	"github.com/yanndr/topstories/provider/hackernews"
+	"github.com/yanndr/topstories/provider/reddit"
 )
 
 func main() {
 	csvPtr := flag.Bool("csv", false, "Save the result to a csv file.")
 	path := flag.String("o", "outupt.csv", "output file name")
 	n := flag.Int("n", 20, "number of stories to display")
-	c := flag.Int("c", 20, "max concurency allowed")
+	// c := flag.Int("c", 20, "max concurency allowed")
 	flag.Parse()
 
-	cl := hackernews.New(*c)
+	cl := reddit.New()
 	resp, err := cl.GetStories(*n)
 
 	if err != nil {
