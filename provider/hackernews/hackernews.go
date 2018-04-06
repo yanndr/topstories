@@ -20,7 +20,7 @@ type hackernews struct {
 	topStoriesURL, itemURL string
 }
 
-// New return a new HackerNews story provider.
+// New returns a new HackerNews story provider.
 func New(maxGoRoutine int) provider.StoryProvider {
 	return &hackernews{
 		sem:           make(chan int, maxGoRoutine),
@@ -90,7 +90,12 @@ func getItem(url string) (*item, error) {
 	}
 	defer body.Close()
 
-	return parseItem(body)
+	i := &item{}
+	err = parse(body, &i)
+	if err != nil {
+		return nil, err
+	}
+	return i, err
 }
 
 func getIDS(url string) ([]int, error) {
@@ -100,43 +105,29 @@ func getIDS(url string) ([]int, error) {
 	}
 	defer body.Close()
 
-	return parseIDs(body)
-}
-
-func parseIDs(r io.Reader) ([]int, error) {
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("parsing ids failed readall error: %v", err)
-	}
-
 	var keys []int
-	if len(b) == 0 {
-		return keys, nil
-	}
-
-	err = json.Unmarshal(b, &keys)
+	err = parse(body, &keys)
 	if err != nil {
-		return nil, fmt.Errorf("parsing ids failed Unmasrshal error: %v", err)
+		return nil, err
 	}
 
-	return keys, nil
+	return keys, err
 }
 
-func parseItem(r io.Reader) (*item, error) {
+func parse(r io.Reader, o interface{}) error {
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("parsing item failed readall error: %v", err)
+		return fmt.Errorf("parsing failed readall error: %v", err)
 	}
 
-	i := &item{}
 	if len(b) == 0 {
-		return i, nil
+		return nil
 	}
 
-	err = json.Unmarshal(b, i)
+	err = json.Unmarshal(b, o)
 	if err != nil {
-		return nil, fmt.Errorf("parsing item failed Unmasrshal error: %v", err)
+		return fmt.Errorf("parsing failed Unmasrshal error: %v", err)
 	}
 
-	return i, nil
+	return nil
 }
