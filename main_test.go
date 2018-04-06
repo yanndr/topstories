@@ -6,7 +6,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/yanndr/topstories/client"
+	"github.com/yanndr/topstories/provider"
 )
 
 type fakeStory struct {
@@ -34,14 +34,14 @@ func TestHandleResponse(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			c := make(chan client.Response)
+			c := make(chan provider.Response)
 			go func() {
 				defer close(c)
-				c <- client.Response{Story: tc.story, Error: tc.errItem}
+				c <- provider.Response{Story: tc.story, Error: tc.errItem}
 			}()
 
 			called := false
-			err := handleResponse(c, func(s client.Story) error {
+			err := handleResponse(c, func(s provider.Story) error {
 				called = true
 				return tc.errFunc
 			})
@@ -73,10 +73,10 @@ func TestOutputToCsv(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			c := make(chan client.Response)
+			c := make(chan provider.Response)
 			go func() {
 				defer close(c)
-				c <- client.Response{Story: tc.story, Error: tc.errItem}
+				c <- provider.Response{Story: tc.story, Error: tc.errItem}
 			}()
 
 			buf := bytes.NewBufferString("")

@@ -3,4 +3,4 @@ language: go
 go:
   - master
 script:
-  - go test -race
+  - go test -race ./...

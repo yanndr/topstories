@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
@@ -28,12 +29,18 @@ func handleString(s string) func(http.ResponseWriter, *http.Request) {
 
 func failAfterOne(s string) func(http.ResponseWriter, *http.Request) {
 	i := 0
+	m := sync.RWMutex{}
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		m.RLock()
 		if i > 2 {
 			fmt.Fprintf(w, "error")
 		}
+		m.RUnlock()
 		fmt.Fprintf(w, s)
+		m.Lock()
 		i++
+		m.Unlock()
 	}
 }
 
