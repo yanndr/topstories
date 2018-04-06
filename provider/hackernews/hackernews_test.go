@@ -70,7 +70,7 @@ func TestGet(t *testing.T) {
 			mux.HandleFunc("/ids", handleString(tc.idsResponse))
 			mux.HandleFunc("/items/", tc.itemFunc(tc.itemResponse))
 
-			resp, err := c.Get(tc.n)
+			resp, err := c.GetStories(tc.n)
 
 			if (err != nil) != tc.errorIds {
 				if tc.errorIds {
