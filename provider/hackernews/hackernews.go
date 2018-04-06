@@ -57,10 +57,12 @@ func (h hackernews) GetStories(limit int) (<-chan provider.Response, error) {
 		wg.Add(1)
 		go func(id int) {
 			h.sem <- 1
+
 			defer func() {
 				wg.Done()
 				<-h.sem
 			}()
+
 			r := provider.Response{}
 			item, err := getItem(fmt.Sprintf(h.itemURL, id))
 			if err != nil {

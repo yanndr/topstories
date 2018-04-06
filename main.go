@@ -62,7 +62,6 @@ func handleResponse(resp <-chan provider.Response, f func(provider.Story) error)
 }
 
 func outputToCsv(f io.Writer, resp <-chan provider.Response) error {
-
 	w := csv.NewWriter(f)
 	handleResponse(resp, func(s provider.Story) error {
 		return w.Write([]string{s.Title(), s.URL()})
