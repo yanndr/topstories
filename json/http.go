@@ -14,7 +14,7 @@ func UnmarshalFromURL(url string, v interface{}) error {
 	c := &http.Client{}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return fmt.Errorf("error issuing the request: %s", err)
+		return fmt.Errorf("error creating the request: %s", err)
 	}
 	req.Header.Set("User-Agent", "github.com/yanndr/topStories")
 
