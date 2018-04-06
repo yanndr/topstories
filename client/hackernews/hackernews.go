@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"sync"
 
 	"github.com/yanndr/topstories/client"
@@ -31,42 +30,46 @@ func New(maxGoRoutine int) client.Client {
 }
 
 type item struct {
-	Title string `json:"title"`
-	URL   string `json:"url"`
+	T string `json:"title"`
+	U string `json:"url"`
 }
 
-func (h hackernews) Get(limit int) (<-chan string, error) {
-	b, err := client.Get(h.topStoriesURL)
-	if err != nil {
-		return nil, fmt.Errorf("error on get news ids request: %s", err)
-	}
-	defer b.Close()
-	ids, err := parseIDs(b)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing ids response: %s", err)
-	}
+func (i *item) Title() string {
+	return i.T
+}
 
-	resp := make(chan string)
+func (i *item) URL() string {
+	return i.U
+}
+
+func (h hackernews) Get(limit int) (<-chan client.Response, error) {
+	ids, err := getIDS(h.topStoriesURL)
+	if err != nil {
+		return nil, fmt.Errorf("error getting ids: %s", err)
+	}
 
 	ids = ids[:limit]
+
+	resp := make(chan client.Response)
+
 	wg := sync.WaitGroup{}
 	for _, id := range ids {
 		wg.Add(1)
 		go func(id int) {
 			h.sem <- 1
-			defer wg.Done()
-			b, err := client.Get(fmt.Sprintf(h.itemURL, id))
+			defer func() {
+				wg.Done()
+				<-h.sem
+			}()
+
+			r := client.Response{}
+			item, err := getItem(fmt.Sprintf(h.itemURL, id))
 			if err != nil {
-				log.Printf("need to handle this error: %s", err)
-				return
+				r.Error = err
 			}
-			item, err := parseItem(b)
-			if err != nil {
-				log.Printf("need to handle this error: %s", err)
-				return
-			}
-			resp <- item.Title
-			<-h.sem
+			r.Story = item
+			resp <- r
+
 		}(id)
 	}
 
@@ -77,6 +80,26 @@ func (h hackernews) Get(limit int) (<-chan string, error) {
 
 	return resp, nil
 
+}
+
+func getItem(url string) (*item, error) {
+	body, err := client.GetResponseBody(url)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	return parseItem(body)
+}
+
+func getIDS(url string) ([]int, error) {
+	body, err := client.GetResponseBody(url)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	return parseIDs(body)
 }
 
 func parseIDs(r io.Reader) ([]int, error) {

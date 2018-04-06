@@ -8,19 +8,40 @@ import (
 
 // Client is an inteface that define a news aggregator method.
 type Client interface {
-	Get(int) (<-chan string, error)
+	Get(int) (<-chan Response, error)
 }
 
-// Get execute a Get request and send the body.
-func Get(url string) (io.ReadCloser, error) {
-	res, err := http.Get(url)
+// Story is an interface that define a story.
+type Story interface {
+	Title() string
+	URL() string
+}
+
+// Response represent a response from a story provider.
+type Response struct {
+	Story Story
+	Error error
+}
+
+// GetResponseBody execute a Get request and send body response.
+func GetResponseBody(url string) (io.ReadCloser, error) {
+	res, err := getRequest(url)
+	if err != nil {
+		return nil, err
+	}
+	if 200 > res.StatusCode || res.StatusCode > 299 {
+		return nil, fmt.Errorf("err with response: %s", res.Status)
+	}
+	return res.Body, nil
+}
+
+func getRequest(url string) (*http.Response, error) {
+	c := &http.Client{}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error issuing the request: %s", err)
 	}
+	req.Header.Set("User-Agent", "github.com/yanndr/topStories")
 
-	if res.StatusCode >= 400 {
-		return nil, fmt.Errorf("err with status: %s", res.Status)
-	}
-
-	return res.Body, nil
+	return c.Do(req)
 }
