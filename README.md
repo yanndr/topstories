@@ -14,6 +14,7 @@ go install
 ## Usage
 ```
 topstories 
+Flags:
  -c int
         max concurency allowed (default 20)
   -csv
