@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/yanndr/topstories/client"
+	"github.com/yanndr/topstories/provider"
 )
 
 const (
@@ -20,8 +20,8 @@ type hackernews struct {
 	topStoriesURL, itemURL string
 }
 
-// New return a new HackerNews client.
-func New(maxGoRoutine int) client.Client {
+// New return a new HackerNews provider.
+func New(maxGoRoutine int) provider.StoryProvider {
 	return &hackernews{
 		sem:           make(chan int, maxGoRoutine),
 		topStoriesURL: topStoriesURL,
@@ -42,7 +42,7 @@ func (i *item) URL() string {
 	return i.U
 }
 
-func (h hackernews) Get(limit int) (<-chan client.Response, error) {
+func (h hackernews) GetStories(limit int) (<-chan provider.Response, error) {
 	ids, err := getIDS(h.topStoriesURL)
 	if err != nil {
 		return nil, fmt.Errorf("error getting ids: %s", err)
@@ -50,7 +50,7 @@ func (h hackernews) Get(limit int) (<-chan client.Response, error) {
 
 	ids = ids[:limit]
 
-	resp := make(chan client.Response)
+	resp := make(chan provider.Response)
 
 	wg := sync.WaitGroup{}
 	for _, id := range ids {
@@ -61,7 +61,7 @@ func (h hackernews) Get(limit int) (<-chan client.Response, error) {
 				wg.Done()
 				<-h.sem
 			}()
-			r := client.Response{}
+			r := provider.Response{}
 			item, err := getItem(fmt.Sprintf(h.itemURL, id))
 			if err != nil {
 				r.Error = err
@@ -82,7 +82,7 @@ func (h hackernews) Get(limit int) (<-chan client.Response, error) {
 }
 
 func getItem(url string) (*item, error) {
-	body, err := client.GetResponseBody(url)
+	body, err := provider.GetResponseBody(url)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func getItem(url string) (*item, error) {
 }
 
 func getIDS(url string) ([]int, error) {
-	body, err := client.GetResponseBody(url)
+	body, err := provider.GetResponseBody(url)
 	if err != nil {
 		return nil, err
 	}

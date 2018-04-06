@@ -8,8 +8,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/yanndr/topstories/client"
-	"github.com/yanndr/topstories/client/hackernews"
+	"github.com/yanndr/topstories/provider"
+	"github.com/yanndr/topstories/provider/hackernews"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	cl := hackernews.New(*c)
-	resp, err := cl.Get(*n)
+	resp, err := cl.GetStories(*n)
 
 	if err != nil {
 		log.Panicf("cannot get the stories: %s", err)
@@ -39,7 +39,7 @@ func main() {
 		return
 	}
 
-	err = handleResponse(resp, func(s client.Story) error {
+	err = handleResponse(resp, func(s provider.Story) error {
 		_, err := fmt.Printf("|%-60s|%-100s|\n", s.Title(), s.URL())
 		return err
 	})
@@ -48,7 +48,7 @@ func main() {
 	}
 }
 
-func handleResponse(resp <-chan client.Response, f func(client.Story) error) error {
+func handleResponse(resp <-chan provider.Response, f func(provider.Story) error) error {
 	for r := range resp {
 		if r.Error != nil {
 			return r.Error
@@ -61,10 +61,10 @@ func handleResponse(resp <-chan client.Response, f func(client.Story) error) err
 	return nil
 }
 
-func outputToCsv(f io.Writer, resp <-chan client.Response) error {
+func outputToCsv(f io.Writer, resp <-chan provider.Response) error {
 
 	w := csv.NewWriter(f)
-	handleResponse(resp, func(s client.Story) error {
+	handleResponse(resp, func(s provider.Story) error {
 		return w.Write([]string{s.Title(), s.URL()})
 	})
 	w.Flush()

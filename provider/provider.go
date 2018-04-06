@@ -1,4 +1,4 @@
-package client
+package provider
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-// Client is an inteface that define a news aggregator method.
-type Client interface {
-	Get(int) (<-chan Response, error)
+// StoryProvider is an inteface that define a news aggregator method.
+type StoryProvider interface {
+	GetStories(int) (<-chan Response, error)
 }
 
 // Story is an interface that define a story.
