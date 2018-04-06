@@ -1,12 +1,10 @@
 package hackernews
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"sync"
 
+	"github.com/yanndr/topstories/json"
 	"github.com/yanndr/topstories/provider"
 )
 
@@ -43,7 +41,8 @@ func (i *item) URL() string {
 }
 
 func (h hackernews) GetStories(limit int) (<-chan provider.Response, error) {
-	ids, err := getIDS(h.topStoriesURL)
+	var ids []int
+	err := json.UnmarshalFromURL(h.topStoriesURL, &ids)
 	if err != nil {
 		return nil, fmt.Errorf("error getting ids: %s", err)
 	}
@@ -64,7 +63,8 @@ func (h hackernews) GetStories(limit int) (<-chan provider.Response, error) {
 			}()
 
 			r := provider.Response{}
-			item, err := getItem(fmt.Sprintf(h.itemURL, id))
+			item := &item{}
+			err := json.UnmarshalFromURL(fmt.Sprintf(h.itemURL, id), item)
 			if err != nil {
 				r.Error = err
 			}
@@ -81,53 +81,4 @@ func (h hackernews) GetStories(limit int) (<-chan provider.Response, error) {
 
 	return resp, nil
 
-}
-
-func getItem(url string) (*item, error) {
-	body, err := provider.GetResponseBody(url)
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-
-	i := &item{}
-	err = parse(body, &i)
-	if err != nil {
-		return nil, err
-	}
-	return i, err
-}
-
-func getIDS(url string) ([]int, error) {
-	body, err := provider.GetResponseBody(url)
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-
-	var keys []int
-	err = parse(body, &keys)
-	if err != nil {
-		return nil, err
-	}
-
-	return keys, err
-}
-
-func parse(r io.Reader, o interface{}) error {
-	b, err := ioutil.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("parsing failed readall error: %v", err)
-	}
-
-	if len(b) == 0 {
-		return nil
-	}
-
-	err = json.Unmarshal(b, o)
-	if err != nil {
-		return fmt.Errorf("parsing failed Unmasrshal error: %v", err)
-	}
-
-	return nil
 }

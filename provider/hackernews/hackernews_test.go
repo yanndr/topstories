@@ -1,7 +1,6 @@
 package hackernews
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -132,80 +131,6 @@ func TestGetStories(t *testing.T) {
 			} else if len(errs) == 0 && tc.errorItem {
 				t.Fatal("expected  error, got no error")
 			}
-		})
-	}
-}
-
-func TestParseIDs(t *testing.T) {
-	tt := []struct {
-		name   string
-		input  string
-		result []int
-		err    bool
-	}{
-		{name: "basic", input: "[1,2,3,4]", result: []int{1, 2, 3, 4}, err: false},
-		{name: "empty", input: "", result: []int{}, err: false},
-		{name: "bignumber", input: "[16755530,16760736,16756901,16761349,16757044]", result: []int{16755530, 16760736, 16756901, 16761349, 16757044}, err: false},
-		{name: "wrong format", input: "test", result: nil, err: true},
-		{name: "wrong number", input: "[0,1,01,1]", result: nil, err: true},
-		{name: "with letter", input: "[0,1,b,1]", result: nil, err: true},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			buf := bytes.NewBufferString(tc.input)
-			var output []int
-			err := parse(buf, &output)
-			if (err != nil) != tc.err {
-				if tc.err {
-					t.Fatalf("expected error, got no error")
-				}
-				t.Fatalf("expected no error, got %v", err)
-			}
-			if len(output) != len(tc.result) {
-				t.Fatalf("expected %v, got %v", len(tc.result), len(output))
-			}
-
-			for i := 0; i < len(output); i++ {
-				if output[i] != tc.result[i] {
-					t.Fatalf("expected %v, got %v", tc.result[i], output[i])
-				}
-			}
-		})
-	}
-}
-
-func TestParseItem(t *testing.T) {
-	tt := []struct {
-		name   string
-		input  string
-		result *item
-		err    bool
-	}{
-		{name: "basic", input: response, result: &item{T: "test", U: "https://testwww.nytimes.com/2018/04/04/technology/google-letter-ceo-pentagon-project.html"}, err: false},
-		{name: "empty", input: "", result: &item{}, err: false},
-		{name: "wrong format", input: "tst", result: nil, err: true},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			buf := bytes.NewBufferString(tc.input)
-			var output item
-			err := parse(buf, &output)
-			if (err != nil) != tc.err {
-				if tc.err {
-					t.Fatalf("expected error, got no error")
-				}
-				t.Fatalf("expected no error, got %v", err)
-			}
-			if tc.err {
-				return
-			}
-
-			if output.Title() != tc.result.T {
-				t.Fatalf("expected %v, got %v", tc.result.T, output.Title())
-			}
-
 		})
 	}
 }
