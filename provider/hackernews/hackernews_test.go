@@ -43,6 +43,21 @@ func failAfterOne(s string) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+func TestNew(t *testing.T) {
+	p := New(10)
+
+	hn, ok := p.(*hackernews)
+
+	if !ok {
+		t.Fatalf("Expect %T got %T", &hackernews{}, p)
+	}
+
+	if hn.sem == nil {
+		t.Fatal("Expect non Nil Semaphore")
+	}
+
+}
+
 func TestGetStories(t *testing.T) {
 
 	t.Parallel()
