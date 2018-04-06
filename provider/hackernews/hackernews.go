@@ -20,7 +20,7 @@ type hackernews struct {
 	topStoriesURL, itemURL string
 }
 
-// New return a new HackerNews provider.
+// New return a new HackerNews story provider.
 func New(maxGoRoutine int) provider.StoryProvider {
 	return &hackernews{
 		sem:           make(chan int, maxGoRoutine),

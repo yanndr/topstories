@@ -6,24 +6,24 @@ import (
 	"net/http"
 )
 
-// StoryProvider is an inteface that define a news aggregator method.
+// StoryProvider is an inteface that defines a news aggregator method.
 type StoryProvider interface {
 	GetStories(int) (<-chan Response, error)
 }
 
-// Story is an interface that define a story.
+// Story is an interface that defines a story.
 type Story interface {
 	Title() string
 	URL() string
 }
 
-// Response represent a response from a story provider.
+// Response represents a response from a story provider.
 type Response struct {
 	Story Story
 	Error error
 }
 
-// GetResponseBody execute a Get request and send body response.
+// GetResponseBody executes a Get request and returns the body response.
 func GetResponseBody(url string) (io.ReadCloser, error) {
 	res, err := getRequest(url)
 	if err != nil {

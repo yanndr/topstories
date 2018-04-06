@@ -31,7 +31,6 @@ func failAfterOne(s string) func(http.ResponseWriter, *http.Request) {
 	i := 0
 	m := sync.RWMutex{}
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		m.RLock()
 		if i > 2 {
 			fmt.Fprintf(w, "error")
@@ -44,7 +43,7 @@ func failAfterOne(s string) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-func TestGet(t *testing.T) {
+func TestGetStories(t *testing.T) {
 
 	t.Parallel()
 
