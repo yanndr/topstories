@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/yanndr/topstories/provider"
 	"github.com/yanndr/topstories/provider/hackernews"
+	"github.com/yanndr/topstories/provider/reddit"
 )
 
 func main() {
 	var (
 		output *os.File
+		p      provider.StoryProvider
 		sw     provider.StoryWriter
 		err    error
 	)
@@ -36,10 +39,31 @@ func main() {
 	}
 
 	defer output.Close()
-	p := hackernews.New(*c)
+
+	if len(os.Args) > 1 {
+		p, err = getProviderByName(os.Args[1], *c)
+		if err != nil {
+			fmt.Printf("Can't reconize provider %s, %s\n", os.Args[1], err)
+			os.Exit(1)
+		}
+	} else {
+		p = hackernews.New(*c)
+	}
+
 	err = run(p, sw, *n)
 	if err != nil {
 		log.Panic(err)
+	}
+}
+
+func getProviderByName(name string, maxConcurecy int) (provider.StoryProvider, error) {
+	switch strings.ToLower(name) {
+	case "hackernews":
+		return hackernews.New(maxConcurecy), nil
+	case "reddit":
+		return reddit.New(), nil
+	default:
+		return nil, fmt.Errorf("provider not found")
 	}
 }
 
