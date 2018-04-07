@@ -16,12 +16,12 @@ import (
 func main() {
 	var (
 		output *os.File
-		p      provider.StoryProvider
 		sw     provider.StoryWriter
 		err    error
 	)
 
 	csvPtr := flag.Bool("csv", false, "Save the result to a csv file.")
+	prPtr := flag.String("p", "hackernews", "Stories provider: hackernews or reddit")
 	path := flag.String("o", "outupt.csv", "output file name")
 	n := flag.Int("n", 20, "number of stories to display")
 	c := flag.Int("c", 20, "max concurency allowed")
@@ -40,14 +40,10 @@ func main() {
 
 	defer output.Close()
 
-	if len(os.Args) > 1 {
-		p, err = getProviderByName(os.Args[1], *c)
-		if err != nil {
-			fmt.Printf("Can't reconize provider %s, %s\n", os.Args[1], err)
-			os.Exit(1)
-		}
-	} else {
-		p = hackernews.New(*c)
+	p, err := getProviderByName(*prPtr, *c)
+	if err != nil {
+		fmt.Printf("Can't reconize provider %s, %s\n", os.Args[1], err)
+		os.Exit(1)
 	}
 
 	err = run(p, sw, *n)
