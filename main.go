@@ -42,7 +42,7 @@ func main() {
 
 	p, err := getProviderByName(*prPtr, *c)
 	if err != nil {
-		fmt.Printf("Can't reconize provider %s, %s\n", os.Args[1], err)
+		fmt.Printf("Can't reconize provider %s, %s\n", *prPtr, err)
 		os.Exit(1)
 	}
 
