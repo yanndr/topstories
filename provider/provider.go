@@ -23,43 +23,46 @@ type Response struct {
 	Error error
 }
 
+// StoryWriter is an interface that define the methods of a story writer.
 type StoryWriter interface {
 	Write(s Story) error
 	Flush() error
 }
 
-type Writer struct {
+type writer struct {
 	w io.Writer
 }
 
-func NewWriter(w io.Writer) *Writer {
-	return &Writer{
+// NewWriter returns a new story writer to write on w.
+func NewWriter(w io.Writer) StoryWriter {
+	return &writer{
 		w: w,
 	}
 }
 
-func (w Writer) Write(s Story) error {
+func (w *writer) Write(s Story) error {
 	_, err := w.w.Write([]byte(fmt.Sprintf("|%-60s|%-100s|\n", s.Title(), s.URL())))
 	return err
 }
 
-func (Writer) Flush() error { return nil }
+func (*writer) Flush() error { return nil }
 
-type CsvWriter struct {
+type csvWriter struct {
 	w *csv.Writer
 }
 
-func NewCsvWriter(w *csv.Writer) *CsvWriter {
-	return &CsvWriter{
+// NewCsvWriter returns a new story CSV writer to write on w.
+func NewCsvWriter(w *csv.Writer) StoryWriter {
+	return &csvWriter{
 		w: w,
 	}
 }
 
-func (w CsvWriter) Write(s Story) error {
+func (w *csvWriter) Write(s Story) error {
 	return w.w.Write([]string{s.Title(), s.URL()})
 }
 
-func (w CsvWriter) Flush() error {
+func (w *csvWriter) Flush() error {
 	w.w.Flush()
 	return w.w.Error()
 }
