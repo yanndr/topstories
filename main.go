@@ -48,13 +48,14 @@ func run(p provider.StoryProvider, w provider.StoryWriter, n int) error {
 	if err != nil {
 		return fmt.Errorf("cannot get the stories: %s", err)
 	}
+
 	for r := range resp {
 		if r.Error != nil {
-			return err
+			return r.Error
 		}
 		err := w.Write(r.Story)
 		if err != nil {
-			return err
+			return r.Error
 		}
 	}
 
