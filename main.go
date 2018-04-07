@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -36,13 +37,16 @@ func main() {
 
 	defer output.Close()
 	p := hackernews.New(*c)
-	run(p, sw, *n)
+	err = run(p, sw, *n)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func run(p provider.StoryProvider, w provider.StoryWriter, n int) error {
 	resp, err := p.GetStories(n)
 	if err != nil {
-		log.Panicf("cannot get the stories: %s", err)
+		return fmt.Errorf("cannot get the stories: %s", err)
 	}
 	for r := range resp {
 		if r.Error != nil {

@@ -40,7 +40,7 @@ type fakeStoryWriter struct {
 }
 
 func (w fakeStoryWriter) Write(s provider.Story) error {
-	_, err := w.w.Write([]byte(fmt.Sprintf("|%-60s|%-100s|\n", s.Title(), s.URL())))
+	_, err := w.w.Write([]byte(fmt.Sprintf("|%-s|%s|\n", s.Title(), s.URL())))
 	return err
 }
 
@@ -48,21 +48,14 @@ func (fakeStoryWriter) Flush() error { return nil }
 
 func TestRun(t *testing.T) {
 
-	tt := []struct {
-		name    string
-		story   fakeStory
-		errItem error
-		errFunc error
-	}{
-		{name: "Response with story", story: fakeStory{}},
-		{name: "Response with error", errItem: fmt.Errorf("error"), errFunc: nil},
-		{name: "Response with func error", errFunc: fmt.Errorf("error")},
+	b := &bytes.Buffer{}
+	err := run(&fakeProvider{}, &fakeStoryWriter{w: b}, 10)
+
+	if err != nil {
+		t.Fatalf("Should not return an erro, got %v", err)
 	}
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			b := &bytes.Buffer{}
-			run(&fakeProvider{}, &fakeStoryWriter{w: b}, 10)
-		})
+	if len(b.Bytes()) == 0 {
+		t.Fatal("output should not be empty")
 	}
 }
