@@ -9,26 +9,16 @@ type reddit struct {
 	newsURL string
 }
 
-type result struct {
-	Data data `json:"data"`
-}
-type data struct {
-	Children []children `json:"children"`
-}
-type children struct {
-	Data *childernData `json:"data"`
-}
-
-type childernData struct {
+type childrenData struct {
 	T string `json:"title"`
 	U string `json:"url"`
 }
 
-func (i *childernData) Title() string {
+func (i *childrenData) Title() string {
 	return i.T
 }
 
-func (i *childernData) URL() string {
+func (i *childrenData) URL() string {
 	return i.U
 }
 
@@ -45,7 +35,13 @@ func New() provider.StoryProvider {
 
 func (p *reddit) GetStories(limit int) (<-chan provider.Response, error) {
 
-	var r result
+	var r struct {
+		Data struct {
+			Children []struct {
+				Data *childrenData `json:"data"`
+			} `json:"children"`
+		} `json:"data"`
+	}
 
 	err := json.UnmarshalFromURL(p.newsURL, &r)
 	if err != nil {
