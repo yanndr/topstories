@@ -12,6 +12,7 @@ func handleString(s string) func(http.ResponseWriter, *http.Request) {
 		fmt.Fprintf(w, s)
 	}
 }
+
 func TestGetStories(t *testing.T) {
 
 	t.Parallel()
@@ -22,7 +23,8 @@ func TestGetStories(t *testing.T) {
 		response string
 		err      bool
 	}{
-		{name: "happy", n: 1, response: response, err: false},
+		{name: "success", n: 1, response: response, err: false},
+		{name: "error", n: 1, response: "error", err: true},
 	}
 
 	for _, tc := range tt {
