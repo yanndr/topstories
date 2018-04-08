@@ -24,7 +24,7 @@ func TestNewWriter(t *testing.T) {
 	w.Write(&fakeStory{})
 
 	if len(b.Bytes()) == 0 {
-		t.Fatal("Expected data writen on the buffer, got nothig")
+		t.Fatal("Expected data written on the buffer, got nothig")
 	}
 }
 
@@ -36,6 +36,6 @@ func TestNewCsvWriter(t *testing.T) {
 	w.Flush()
 
 	if len(b.Bytes()) == 0 {
-		t.Fatal("Expected data writen on the buffer, got nothig")
+		t.Fatal("Expected data written on the buffer, got nothig")
 	}
 }
