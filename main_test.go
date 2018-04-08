@@ -68,8 +68,17 @@ func (w fakeStoryWriter) Write(s provider.Story) error {
 
 func (fakeStoryWriter) Flush() error { return nil }
 
-func TestRun(t *testing.T) {
+type fakeErrorStoryWriter struct {
+}
 
+func (w fakeErrorStoryWriter) Write(s provider.Story) error {
+	return fmt.Errorf("error")
+}
+
+func (fakeErrorStoryWriter) Flush() error { return nil }
+
+func TestRun(t *testing.T) {
+	b := &bytes.Buffer{}
 	tt := []struct {
 		name     string
 		n        int
@@ -77,16 +86,15 @@ func TestRun(t *testing.T) {
 		writter  provider.StoryWriter
 		err      bool
 	}{
-		{"normal", 5, &fakeProvider{}, &fakeStoryWriter{}, false},
-		{"provider error", 5, &errorProvider{}, &fakeStoryWriter{}, true},
-		{"story error", 5, &fakeStoryErrorProvider{}, &fakeStoryWriter{}, true},
+		{"normal", 5, &fakeProvider{}, &fakeStoryWriter{w: b}, false},
+		{"provider error", 5, &errorProvider{}, &fakeStoryWriter{w: b}, true},
+		{"story error", 5, &fakeStoryErrorProvider{}, &fakeStoryWriter{w: b}, true},
+		{"story error", 5, &fakeProvider{}, &fakeErrorStoryWriter{}, true},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			b := &bytes.Buffer{}
-			err := run(tc.provider, &fakeStoryWriter{w: b}, tc.n)
-
+			err := run(tc.provider, tc.writter, tc.n)
 			if err != nil && !tc.err {
 				t.Fatalf("expect no error, got %v", err)
 			} else if err == nil && tc.err {
