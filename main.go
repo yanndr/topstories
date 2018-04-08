@@ -47,8 +47,13 @@ func main() {
 	prPtr := flag.String("p", "hackernews", "Stories provider: hackernews or reddit")
 	path := flag.String("o", "outupt.csv", "output file name")
 	n := flag.Int("n", 20, "number of stories to display")
-	c := flag.Int("c", 20, "max concurency allowed")
+	c := flag.Uint("c", 20, "max concurency allowed")
 	flag.Parse()
+
+	if *c < 1 {
+		fmt.Println("Cannot have less than 1 go routine allowed.")
+		os.Exit(1)
+	}
 
 	if *csvPtr {
 		output, err = os.Create(*path)
@@ -75,7 +80,7 @@ func main() {
 	}
 }
 
-func getProviderByName(name string, maxConcurecy int) (provider.StoryProvider, error) {
+func getProviderByName(name string, maxConcurecy uint) (provider.StoryProvider, error) {
 	switch strings.ToLower(name) {
 	case "hackernews":
 		return hackernews.New(maxConcurecy), nil

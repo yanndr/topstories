@@ -19,7 +19,7 @@ type hackernews struct {
 }
 
 // New returns a new HackerNews story provider.
-func New(maxGoRoutine int) provider.StoryProvider {
+func New(maxGoRoutine uint) provider.StoryProvider {
 	return &hackernews{
 		sem:           make(chan int, maxGoRoutine),
 		topStoriesURL: topStoriesURL,

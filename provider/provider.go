@@ -41,7 +41,7 @@ func NewWriter(w io.Writer) StoryWriter {
 }
 
 func (w *writer) Write(s Story) error {
-	_, err := w.w.Write([]byte(fmt.Sprintf("|%-60s|%-100s|\n", s.Title(), s.URL())))
+	_, err := w.w.Write([]byte(fmt.Sprintf("|%-70s|%-100s|\n", s.Title(), s.URL())))
 	return err
 }
 
