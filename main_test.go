@@ -74,11 +74,12 @@ func TestRun(t *testing.T) {
 		name     string
 		n        int
 		provider provider.StoryProvider
+		writter  provider.StoryWriter
 		err      bool
 	}{
-		{name: "normal", n: 5, provider: &fakeProvider{}, err: false},
-		{name: "provider error", n: 5, provider: &errorProvider{}, err: true},
-		{name: "story error", n: 5, provider: &fakeStoryErrorProvider{}, err: true},
+		{"normal", 5, &fakeProvider{}, &fakeStoryWriter{}, false},
+		{"provider error", 5, &errorProvider{}, &fakeStoryWriter{}, true},
+		{"story error", 5, &fakeStoryErrorProvider{}, &fakeStoryWriter{}, true},
 	}
 
 	for _, tc := range tt {
@@ -87,9 +88,9 @@ func TestRun(t *testing.T) {
 			err := run(tc.provider, &fakeStoryWriter{w: b}, tc.n)
 
 			if err != nil && !tc.err {
-				t.Fatalf("Should not return an error, got %v", err)
+				t.Fatalf("expect no error, got %v", err)
 			} else if err == nil && tc.err {
-				t.Fatal("Should  return an error, got no error")
+				t.Fatal("expect error, got no error")
 			}
 
 			if !tc.err && len(b.Bytes()) == 0 {
@@ -98,4 +99,33 @@ func TestRun(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGetProviderByName(t *testing.T) {
+	tt := []struct {
+		name string
+		err  bool
+	}{
+		{"HackerNews", false},
+		{"hackernews", false},
+		{"reddit", false},
+		{"reDDit", false},
+		{"false", true},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			p, err := getProviderByName(tc.name, 1)
+			if err != nil && !tc.err {
+				t.Fatalf("do not expect an error, got % v", err)
+			} else if err == nil && tc.err {
+				t.Fatal("expect an error, got no error")
+			}
+			if !tc.err {
+				if p == nil {
+					t.Fatalf("Expect a return value, got nil ")
+				}
+			}
+		})
+	}
 }
