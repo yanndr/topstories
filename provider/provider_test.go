@@ -2,7 +2,6 @@ package provider
 
 import (
 	"bytes"
-	"encoding/csv"
 	"testing"
 )
 
@@ -30,7 +29,7 @@ func TestNewWriter(t *testing.T) {
 
 func TestNewCsvWriter(t *testing.T) {
 	b := &bytes.Buffer{}
-	w := NewCsvWriter(csv.NewWriter(b))
+	w := NewCsvWriter(b)
 
 	w.Write(&fakeStory{})
 	w.Flush()

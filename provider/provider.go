@@ -52,9 +52,9 @@ type csvWriter struct {
 }
 
 // NewCsvWriter returns a new story CSV writer to write on w.
-func NewCsvWriter(w *csv.Writer) StoryWriter {
+func NewCsvWriter(w io.Writer) StoryWriter {
 	return &csvWriter{
-		w: w,
+		w: csv.NewWriter(w),
 	}
 }
 

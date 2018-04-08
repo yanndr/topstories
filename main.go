@@ -24,7 +24,6 @@
 package main
 
 import (
-	"encoding/csv"
 	"flag"
 	"fmt"
 	"log"
@@ -60,7 +59,7 @@ func main() {
 		if err != nil {
 			log.Panicf("cannot create the file: %s", err)
 		}
-		sw = provider.NewCsvWriter(csv.NewWriter(output))
+		sw = provider.NewCsvWriter(output)
 	} else {
 		sw = provider.NewWriter(os.Stdout)
 		output = os.Stdout
