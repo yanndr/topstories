@@ -47,7 +47,9 @@ func (h hackernews) GetStories(limit int) (<-chan provider.Response, error) {
 		return nil, fmt.Errorf("error getting ids: %s", err)
 	}
 
-	ids = ids[:limit]
+	if limit < len(ids) {
+		ids = ids[:limit]
+	}
 
 	resp := make(chan provider.Response)
 

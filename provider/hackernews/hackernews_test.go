@@ -31,7 +31,7 @@ func failAfterOne(s string) func(http.ResponseWriter, *http.Request) {
 	m := sync.RWMutex{}
 	return func(w http.ResponseWriter, r *http.Request) {
 		m.RLock()
-		if i > 2 {
+		if i > 0 {
 			fmt.Fprintf(w, "error")
 		}
 		m.RUnlock()
@@ -62,18 +62,18 @@ func TestGetStories(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {
-		name         string
-		n            int
-		idsResponse  string
-		itemResponse string
-		itemFunc     func(string) func(http.ResponseWriter, *http.Request)
-		errorIds     bool
-		errorItem    bool
+		name           string
+		limit          int
+		expectedResult int
+		idsResponse    string
+		itemResponse   string
+		itemFunc       func(string) func(http.ResponseWriter, *http.Request)
 	}{
-		{name: "happy", n: 5, idsResponse: "[1,2,3,4,5,6,7,8,9,10]", itemResponse: response, itemFunc: handleString, errorIds: false, errorItem: false},
-		{name: "badIds", n: 5, idsResponse: "error", itemResponse: response, itemFunc: handleString, errorIds: true, errorItem: false},
-		{name: "badItem", n: 5, idsResponse: "[1,2,3,4,5,6,7,8,9,10]", itemResponse: "error", itemFunc: handleString, errorIds: false, errorItem: true},
-		{name: "badSecondItem", n: 5, idsResponse: "[1,2,3,4,5,6,7,8,9,10]", itemResponse: response, itemFunc: failAfterOne, errorIds: false, errorItem: true},
+		{"success 10 limit 5", 5, 5, "[1,2,3,4,5,6,7,8,9,10]", response, handleString},
+		{"success 10 limit 50", 50, 10, "[1,2,3,4,5,6,7,8,9,10]", response, handleString},
+		{"success 1 limit 5", 5, 1, "[1]", response, handleString},
+		{"success 10 limit 10", 10, 10, "[1,2,3,4,5,6,7,8,9,10]", response, handleString},
+		{"success 10 limit 10 with 20 results", 10, 10, "[1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6,7,8,9,10]", response, handleString},
 	}
 
 	for _, tc := range tt {
@@ -90,16 +90,10 @@ func TestGetStories(t *testing.T) {
 			mux.HandleFunc("/ids", handleString(tc.idsResponse))
 			mux.HandleFunc("/items/", tc.itemFunc(tc.itemResponse))
 
-			resp, err := c.GetStories(tc.n)
+			resp, err := c.GetStories(tc.limit)
 
-			if (err != nil) != tc.errorIds {
-				if tc.errorIds {
-					t.Fatalf("expected error, got no error")
-				}
+			if err != nil {
 				t.Fatalf("expected no error, got %v", err)
-			}
-			if err != nil && tc.errorIds {
-				return
 			}
 
 			i := 0
@@ -122,8 +116,97 @@ func TestGetStories(t *testing.T) {
 				}
 			}
 
-			if i != tc.n {
-				t.Fatalf("error, expect %v got %v", tc.n, i)
+			if i != tc.expectedResult {
+				t.Fatalf("error, expect %v got %v", tc.expectedResult, i)
+			}
+
+			if len(errs) > 0 {
+				t.Fatalf("expected no error, got %v", errs[0])
+			}
+		})
+	}
+}
+
+func TestGetStoriesIdError(t *testing.T) {
+
+	t.Parallel()
+
+	tt := []struct {
+		name         string
+		n            int
+		idsResponse  string
+		itemResponse string
+		itemFunc     func(string) func(http.ResponseWriter, *http.Request)
+	}{
+		{"bad response", 5, "error", response, handleString},
+		{"bad id", 5, "[1,a,3]", response, handleString},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			mux := http.NewServeMux()
+			srv := httptest.NewServer(mux)
+
+			c := &hackernews{
+				sem:           make(chan int, 20),
+				topStoriesURL: fmt.Sprintf("%s/%s", srv.URL, "ids"),
+				itemURL:       fmt.Sprintf("%s/%s/%s", srv.URL, "items", "%v"),
+			}
+
+			mux.HandleFunc("/ids", handleString(tc.idsResponse))
+			mux.HandleFunc("/items/", tc.itemFunc(tc.itemResponse))
+
+			_, err := c.GetStories(tc.n)
+
+			if err == nil {
+				t.Fatalf("expected error, got no error")
+			}
+		})
+	}
+}
+
+func TestGetStoriesItemErrors(t *testing.T) {
+
+	t.Parallel()
+
+	tt := []struct {
+		name         string
+		n            int
+		idsResponse  string
+		itemResponse string
+		itemFunc     func(string) func(http.ResponseWriter, *http.Request)
+		errorItem    bool
+	}{
+		{"badItem", 5, "[1,2,3,4,5,6,7,8,9,10]", "error", handleString, true},
+		{"badSecondItem", 5, "[1,2,3,4,5,6,7,8,9,10]", response, failAfterOne, true},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			mux := http.NewServeMux()
+			srv := httptest.NewServer(mux)
+
+			c := &hackernews{
+				sem:           make(chan int, 20),
+				topStoriesURL: fmt.Sprintf("%s/%s", srv.URL, "ids"),
+				itemURL:       fmt.Sprintf("%s/%s/%s", srv.URL, "items", "%v"),
+			}
+
+			mux.HandleFunc("/ids", handleString(tc.idsResponse))
+			mux.HandleFunc("/items/", tc.itemFunc(tc.itemResponse))
+
+			resp, err := c.GetStories(tc.n)
+
+			if err != nil {
+				t.Fatal("error not espected here")
+			}
+
+			var errs []error
+			for r := range resp {
+				if r.Error != nil {
+					errs = append(errs, r.Error)
+					continue
+				}
 			}
 
 			if len(errs) > 0 && !tc.errorItem {
